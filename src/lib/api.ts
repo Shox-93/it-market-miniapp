@@ -1,4 +1,5 @@
-const API_URL = "http://localhost:8000";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export type Vacancy = {
   id: number;
@@ -13,54 +14,101 @@ export type Vacancy = {
   skills?: string[];
 };
 
-export const getOrder = async (id: string) => {
-  const res = await fetch(`${API_URL}/api/v1/orders/${id}`);
-
-  if (!res.ok) {
-    throw new Error("Ошибка загрузки заказа");
-  }
-
-  return res.json();
+export type Order = {
+  id: number;
+  title: string;
+  company: string;
+  customerType: string;
+  budget: string;
+  start: string;
+  end: string;
+  tags: string[];
 };
 
-export async function getOrders() {
-  const response = await fetch(`${API_URL}/api/v1/orders/`, {
-    cache: "no-store",
-  });
+export type Company = {
+  id: number;
+  name: string;
+  description: string;
+  industry: string;
+  location: string;
+};
 
-  if (!response.ok) {
-    throw new Error("Не удалось получить заказы");
-  }
+export type Specialist = {
+  id: number;
+  fullName: string;
+  role: string;
+  skills: string[];
+  about: string;
+};
 
-  return response.json();
-}
-
-export async function getCompanies(search?: string) {
-  const url = search
-    ? `${API_URL}/api/v1/companies/?search=${encodeURIComponent(search)}`
-    : `${API_URL}/api/v1/companies/`;
-
+async function fetchJson(url: string) {
   const response = await fetch(url, {
     cache: "no-store",
   });
 
   if (!response.ok) {
-    throw new Error("Не удалось получить компании");
+    throw new Error(`Ошибка запроса: ${response.status}`);
   }
 
   return response.json();
 }
 
-export async function getCompany(id: string) {
-  const response = await fetch(`${API_URL}/api/v1/companies/${id}`, {
-    cache: "no-store",
-  });
+export const getOrder = async (id: string): Promise<Order> => {
+  const item = await fetchJson(`${API_URL}/api/v1/orders/${id}`);
 
-  if (!response.ok) {
-    throw new Error("Не удалось получить компанию");
-  }
+  return {
+    id: item.id,
+    title: item.title ?? "Без названия",
+    company: item.company ?? "Не указано",
+    customerType: item.customerType ?? "Не указано",
+    budget: item.budget ?? "Договорная",
+    start: item.start ?? "-",
+    end: item.end ?? "-",
+    tags: item.tags ?? [],
+  };
+};
 
-  return response.json();
+export async function getOrders(): Promise<Order[]> {
+  const data = await fetchJson(`${API_URL}/api/v1/orders/`);
+
+  return data.map((item: any) => ({
+    id: item.id,
+    title: item.title ?? "Без названия",
+    company: item.company ?? "Не указано",
+    customerType: item.customerType ?? "Не указано",
+    budget: item.budget ?? "Договорная",
+    start: item.start ?? "-",
+    end: item.end ?? "-",
+    tags: item.tags ?? [],
+  }));
+}
+
+export async function getCompanies(search?: string): Promise<Company[]> {
+  const url = search
+    ? `${API_URL}/api/v1/companies/?search=${encodeURIComponent(search)}`
+    : `${API_URL}/api/v1/companies/`;
+
+  const data = await fetchJson(url);
+
+  return data.map((item: any) => ({
+    id: item.id,
+    name: item.name ?? "Без названия",
+    description: item.description ?? "",
+    industry: item.industry ?? "Не указано",
+    location: item.location ?? "Не указано",
+  }));
+}
+
+export async function getCompany(id: string): Promise<Company> {
+  const item = await fetchJson(`${API_URL}/api/v1/companies/${id}`);
+
+  return {
+    id: item.id,
+    name: item.name ?? "Без названия",
+    description: item.description ?? "",
+    industry: item.industry ?? "Не указано",
+    location: item.location ?? "Не указано",
+  };
 }
 
 export async function createCompany(name: string) {
@@ -136,15 +184,7 @@ export async function updateOrder(id: number, title: string) {
 }
 
 export async function getVacancies(): Promise<Vacancy[]> {
-  const response = await fetch(`${API_URL}/api/v1/vacancies/`, {
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    throw new Error("Не удалось получить вакансии");
-  }
-
-  const data = await response.json();
+  const data = await fetchJson(`${API_URL}/api/v1/vacancies/`);
 
   return data.map((item: any) => ({
     id: item.id,
@@ -242,16 +282,16 @@ export async function loginUser(email: string, password: string) {
   return data;
 }
 
-export async function getSpecialists() {
-  const response = await fetch(`${API_URL}/api/v1/specialists/`, {
-    cache: "no-store",
-  });
+export async function getSpecialists(): Promise<Specialist[]> {
+  const data = await fetchJson(`${API_URL}/api/v1/specialists/`);
 
-  if (!response.ok) {
-    throw new Error("Не удалось получить специалистов");
-  }
-
-  return response.json();
+  return data.map((item: any) => ({
+    id: item.id,
+    fullName: item.fullName ?? "Без имени",
+    role: item.role ?? "Не указано",
+    skills: item.skills ?? [],
+    about: item.about ?? "",
+  }));
 }
 
 export async function deleteSpecialist(id: number) {
@@ -287,15 +327,7 @@ export async function updateSpecialist(
 }
 
 export async function getVacancy(id: string): Promise<Vacancy> {
-  const response = await fetch(`${API_URL}/api/v1/vacancies/${id}`, {
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    throw new Error("Не удалось получить вакансию");
-  }
-
-  const item = await response.json();
+  const item = await fetchJson(`${API_URL}/api/v1/vacancies/${id}`);
 
   return {
     id: item.id,
