@@ -86,20 +86,22 @@ export default function AdminVacanciesPage() {
     setEditingTitle(vacancy.title);
   };
 
-  const handleEditSave = async (id: number) => {
-    try {
-      const updated = await updateVacancy(id, editingTitle.trim());
+ const handleEditSave = async (id: number) => {
+  try {
+    const updated = await updateVacancy(id, {
+      title: editingTitle.trim(),
+    });
 
-      setVacancies((prev) =>
-        prev.map((vacancy) => (vacancy.id === id ? updated : vacancy))
-      );
+    setVacancies((prev) =>
+      prev.map((vacancy) => (vacancy.id === id ? updated : vacancy))
+    );
 
-      setEditingId(null);
-      setEditingTitle("");
-    } catch (error) {
-      alert("Ошибка при обновлении вакансии");
-    }
-  };
+    setEditingId(null);
+    setEditingTitle("");
+  } catch (error) {
+    console.error("Ошибка обновления вакансии:", error);
+  }
+};
 
   const handleEditCancel = () => {
     setEditingId(null);
